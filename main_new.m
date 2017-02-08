@@ -1,9 +1,8 @@
 % fix kappa theta sigma
 
 % read data from workspace
-load 'C:\Users\jczhuo4\Desktop\Temp_Ruixin\FYP New Code\dATA.mat';
-load 'C:\Users\jczhuo4\Desktop\Temp_Ruixin\FYP New Code\x6MLIBOR.mat';
-
+load 'C:\Users\c2510w2\Desktop\FYP New Code\dATA.mat';
+load 'C:\Users\c2510w2\Desktop\FYP New Code\x6MLIBOR.mat';
 swap2 = evalin('base','USSWAP2');
 swap3 = evalin('base','USSWAP3');
 swap5 = evalin('base','USSWAP5');
@@ -11,31 +10,52 @@ swap7 = evalin('base','USSWAP7');
 swap10 = evalin('base','USSWAP10');
 
 LIBOR = evalin('base','x6MLIBOR');
-%theos = zeros(2618,1);
+theos = zeros(2618,1);
 discount_curve_3 = zeros(2618,0);
 discount_curve_4 = zeros(2618,0);
 returns = zeros(2618,1);
-% ---------------------------------------------
-% Calibation process
-% tool: 2-yr swap; target: 5-yr swap
 
-[theos, dc_tool, dc_target,pars] = calibration(swap2,2,swap5,5);
+% target yr 5
+for i = 1:119
+par = [0.40,0.25,0.05];
+yr2 = swap2(22*i-21:22*i,1);
+yr3 = swap3(22*i-21:22*i,1);
+yr5 = swap5(22*i-21:22*i,1);
+yr7 = swap7(22*i-21:22*i,1);
+yr10 = swap10(22*i-21:22*i,1);
 
+% calculate short rate and parameters
+r_t = calibrate_rt(par,yr2,2);
+par = calibrate_par(r_t,yr5,5);
+
+% set an upper bound for sigma
+if par(3) > 1.25
+    par(3) = 0.7;
+end
+
+% repeat using new par
+r_t = calibrate_rt(par,yr2,2);
+theo_swapRate = swapRate(par,r_t,5);
+
+% calculate and store discount curve
+discountc_1 = bondPrice(par,r_t,2);
+discountc_2 = bondPrice(par,r_t,5);
+discount_curve_3(22*i-21:22*i,1) = discountc_1;
+discount_curve_4(22*i-21:22*i,1) = discountc_2;
+
+% calculate theoratical swap
+theos(22*i-21:22*i,1) = theo_swapRate;
+end
 % calculate error
 error = theos - swap5;
 
 % calculate the return
 for i=1:1826 % maximum index for return
     if error(i) > 0.25
-        % long target, short tool
-        [target, tool]=calculate_return(swap2(i),discount_curve_3(i:22*6*2*3+i,1),2,...
+        % long s5, short s7
+        returns(i)=calculate_return(swap2(i),discount_curve_3(i:22*6*2*3+i,1),2,...
                                     swap5(i), discount_curve_4(i:22*6*2*3+i,1),5,...
                                     LIBOR(i+6*22));
-        X = hedge(swap5, par(i), 5, dc_target(i:22*6*2*3+i,1));
-        Y = hedge(swap2, par(i), 2, dc_tool(i:22*6*2*3+i,1));
-        delta = X/Y
-        returns(i) = long - delta*short;
-
     else if error(i) < -0.25
         returns(i)=calculate_return(swap5(i),discount_curve_4(i:22*6*2*3+i,1),5,...
                                     swap2(i), discount_curve_3(i:22*6*2*3+i,1),2,...

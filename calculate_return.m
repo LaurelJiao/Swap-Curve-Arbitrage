@@ -1,4 +1,4 @@
-function [long, short] = calculate_return(swap_long, curve_long, maturity_long,...
+function f = calculate_return(swap_long, curve_long, maturity_long,...
                               swap_short, curve_short, maturity_short,LIBOR)
                           
     % long fixed position
@@ -15,4 +15,5 @@ function [long, short] = calculate_return(swap_long, curve_long, maturity_long,.
     end
     short = -1*swap_short/2*(LIBOR+1+sum)-curve_short(22*12,1)+1;
         
+    f = long+short;
 end
