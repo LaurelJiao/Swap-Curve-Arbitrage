@@ -26,6 +26,8 @@ for i = 1:119
 
 	% calculate theoratical swap
 	theos(22*i-21:22*i,1) = theo_swapRate;
-	pars(i,:) = par;
+	% month_pars = repmat(par,22,1);
+	%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	pars = rand(2618,3);
 end
 end
