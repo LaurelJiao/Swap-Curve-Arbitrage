@@ -1,33 +1,53 @@
-function [theos, dc_tool, dc_target, pars] = calibration(swap_tool,tool_maturity,swap_target,target_maturity)
-for i = 1:119
-    % converting data to monthly
-    init_par = [0.40,0.25,0.05];
-    swap_tool_monthly = swap_tool(22*i-21:22*i,1);
-    swap_target_monthly = swap_target(22*i-21:22*i,1);
-    
-    % calculate short rate and parameters
-    r_t = calibrate_rt(init_par,swap_tool_monthly,tool_maturity);
-    par = calibrate_par(r_t,swap_target_monthly,target_maturity);
+% fix kappa theta sigma
 
-    % set an upper bound for sigma
-	if par(3) > 1.25
-	    par(3) = 0.7;
-	end
+% read data from workspace
+load 'C:\Users\jczhuo4\Desktop\Temp_Ruixin\FYP New Code\dATA.mat';
+load 'C:\Users\jczhuo4\Desktop\Temp_Ruixin\FYP New Code\x6MLIBOR.mat';
 
-	% repeat using new par
-	r_t = calibrate_rt(par,swap_tool_monthly,tool_maturity);
-	theo_swapRate = swapRate(par,r_t,target_maturity);
+swap2 = evalin('base','USSWAP2');
+swap3 = evalin('base','USSWAP3');
+swap5 = evalin('base','USSWAP5');
+swap7 = evalin('base','USSWAP7');
+swap10 = evalin('base','USSWAP10');
 
-	% calculate and store discount curve
-	discountc_1 = bondPrice(par,r_t,tool_maturity);
-	discountc_2 = bondPrice(par,r_t,target_maturity);
-	dc_tool(22*i-21:22*i,1) = discountc_1;
-	dc_target(22*i-21:22*i,1) = discountc_2;
+LIBOR = evalin('base','x6MLIBOR');
+%theos = zeros(2618,1);
+% discount_curve_3 = zeros(2618,0);
+% discount_curve_4 = zeros(2618,0);
+returns = zeros(2618,1);
+% ----------------------------------------------------------
+% Calibation process
+% tool: 2-yr swap; target: 5-yr swap
 
-	% calculate theoratical swap
-	theos(22*i-21:22*i,1) = theo_swapRate;
-	% month_pars = repmat(par,22,1);
-	%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	pars = rand(2618,3);
-end
-end
+[theos, dc_swap2, dc_swap5, pars] = calibration(swap2,2,swap5,5);
+
+% calculate error
+error = theos - swap5;
+
+% calculate the profit n loss
+% target yr5, tool yr2
+returns = profitnloss(swap2, 2, dc_swap2,swap5, 5, dc_swap5,error,LIBOR,pars);
+
+stat = zeros(5,1);
+stat(1) = mean(returns);
+stat(2) = var(returns);
+stat(3) = std(returns);
+stat(4) = skewness(returns);
+stat(5) = kurtosis(returns);
+
+ 
+% figure
+% plot(theos,'b');
+% hold on
+% plot(swap5,'--r');
+% legend('Theoratical 5 year swap','Market 5 year swap');
+% set(legend,'FontSize',24);
+% hold off
+
+% figure
+% plot(error,'r');
+% hold on
+% plot(returns,'--k');
+% legend('Deviation','Return');
+% set(legend,'FontSize',24);
+% hold off
