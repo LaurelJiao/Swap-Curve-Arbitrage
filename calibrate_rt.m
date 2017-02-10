@@ -7,7 +7,7 @@ for i = 1:len
     % interval for r_t
     interval = [-5,10];
     midpoint = (interval(1)+interval(2))/2;
-    while abs((swapMkt(i) - swapRate(par,midpoint,T))) > small
+    for j = 1:10
          if (swapMkt(i) - swapRate(par,midpoint,T)) < 0
                  interval = [interval(1),midpoint];
                  midpoint = (interval(1) + interval(2))/2;
@@ -18,7 +18,7 @@ for i = 1:len
                  r_t(i) = midpoint;
              end
          end
-    end
+   end
     r_t(i) = midpoint;
 end
 
