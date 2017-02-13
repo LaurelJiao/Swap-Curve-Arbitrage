@@ -1,4 +1,4 @@
-function [theos, dc_tool, dc_target, pars] = calibration(swap_tool,tool_maturity,swap_target,target_maturity)
+function [theos, dc_tool, dc_target, pars, rts] = calibration(swap_tool,tool_maturity,swap_target,target_maturity)
 pars = zeros(2618,3);
 for i = 1:119
     % converting data to monthly
@@ -28,5 +28,6 @@ for i = 1:119
 	% calculate theoratical swap
 	theos(22*i-21:22*i,1) = theo_swapRate;
 	pars(22*i-21:22*i,:) = repmat(par,22,1);
+    rts(22*i-21:22*i,1) = r_t;
 end
 end
